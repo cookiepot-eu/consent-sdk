@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CookiePot SDK Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      line-height: 1.6;
+      background: #f9fafb;
+    }
+    h1 {
+      color: #2563eb;
+    }
+    .alert {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .alert.success {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+    .alert.error {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .status {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      border: 1px solid #e5e7eb;
+    }
+    .status h3 {
+      margin-top: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    pre {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+      margin: 0;
+    }
+    .console {
+      background: #1f2937;
+      color: #10b981;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 16px 0;
+    }
+    .console-line {
+      margin: 4px 0;
+    }
+    .console-line.error {
+      color: #ef4444;
+    }
+    .console-line.warn {
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍪 CookiePot SDK Test</h1>
+
+  <div id="init-status" class="alert">Initializing SDK...</div>
+
+  <p>This page demonstrates the CookiePot consent SDK functionality. Click the buttons below to test different features.</p>
+
+  <div class="controls">
+    <button onclick="sdk.showBanner()">Show Banner</button>
+    <button onclick="sdk.hideBanner()">Hide Banner</button>
+    <button onclick="sdk.showPreferences()">⚙️ Manage Preferences</button>
+    <button onclick="sdk.acceptAll().then(updateStatus)">Accept All</button>
+    <button onclick="sdk.rejectAll().then(updateStatus)">Reject All</button>
+    <button onclick="sdk.resetConsent().then(updateStatus)">Reset Consent</button>
+    <button onclick="updateStatus()">Refresh Status</button>
+  </div>
+
+  <div class="status">
+    <h3>Current Consent State</h3>
+    <pre id="consent-state">Loading...</pre>
+  </div>
+
+  <div class="status">
+    <h3>IDs</h3>
+    <pre id="ids">Loading...</pre>
+  </div>
+
+  <div class="status">
+    <h3>Event Log</h3>
+    <pre id="event-log">Waiting for events...</pre>
+  </div>
+
+  <div class="console" id="console">
+    <div class="console-line">Console output...</div>
+  </div>
+
+  <script type="module">
+    // Console interceptor
+    const consoleLines = [];
+    function addConsoleLog(message, type = 'log') {
+      const timestamp = new Date().toLocaleTimeString();
+      consoleLines.push({ timestamp, message, type });
+      if (consoleLines.length > 20) consoleLines.shift();
+
+      const consoleEl = document.getElementById('console');
+      consoleEl.innerHTML = consoleLines.map(line =>
+        `<div class="console-line ${line.type}">[${line.timestamp}] ${line.message}</div>`
+      ).reverse().join('');
+    }
+
+    // Override console methods
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addConsoleLog(args.join(' '), 'log');
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addConsoleLog(args.join(' '), 'error');
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addConsoleLog(args.join(' '), 'warn');
+    };
+
+    console.log('Loading CookiePot SDK...');
+
+    try {
+      const { CookiePot } = await import('./dist/index.js');
+      console.log('SDK module loaded successfully');
+
+      // Initialize SDK
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+        apiBaseUrl: 'http://localhost:5001/cookiepot-dev/europe-west1',
+        banner: {
+          position: 'bottom-center',
+          theme: 'light',
+          showRejectAll: true,
+        },
+        language: 'en',
+        enableGoogleConsentMode: true,
+        autoBlock: {
+          enabled: true,
+          scripts: [
+            { pattern: 'google-analytics.com', category: 'analytics' },
+            { pattern: 'googletagmanager.com', category: 'analytics' },
+            { pattern: 'facebook.net', category: 'marketing' },
+            { pattern: 'doubleclick.net', category: 'marketing' },
+          ],
+        },
+      });
+
+      console.log('SDK initialized successfully');
+      console.log('Visitor ID:', sdk.getVisitorId());
+      console.log('Session ID:', sdk.getSessionId());
+
+      // Update init status
+      const initStatus = document.getElementById('init-status');
+      initStatus.className = 'alert success';
+      initStatus.textContent = '✅ SDK initialized successfully!';
+
+      // Make SDK globally available
+      window.sdk = sdk;
+
+      // Event logging
+      const eventLog = [];
+      function logEvent(event, data) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `[${timestamp}] ${event}`;
+        console.log(logEntry, data);
+        eventLog.unshift(`${logEntry}:\n${JSON.stringify(data, null, 2)}`);
+        if (eventLog.length > 5) eventLog.pop();
+        document.getElementById('event-log').textContent = eventLog.join('\n\n---\n\n');
+      }
+
+      // Register event listeners
+      sdk.on('consent:change', (consent) => logEvent('consent:change', consent));
+      sdk.on('banner:show', () => logEvent('banner:show', 'Banner displayed'));
+      sdk.on('banner:hide', () => logEvent('banner:hide', 'Banner hidden'));
+      sdk.on('banner:accept_all', () => logEvent('banner:accept_all', 'User accepted all'));
+      sdk.on('banner:reject_all', () => logEvent('banner:reject_all', 'User rejected all'));
+
+      // Update status display
+      window.updateStatus = function() {
+        const consent = sdk.getConsent();
+        document.getElementById('consent-state').textContent = JSON.stringify(consent, null, 2);
+
+        const ids = {
+          visitorId: sdk.getVisitorId(),
+          sessionId: sdk.getSessionId(),
+        };
+        document.getElementById('ids').textContent = JSON.stringify(ids, null, 2);
+
+        console.log('Status updated');
+      };
+
+      // Initial status update
+      updateStatus();
+
+      // Show banner if no consent is stored
+      const storedConsent = localStorage.getItem('cookiepot_consent');
+      console.log('Stored consent:', storedConsent ? 'Found' : 'Not found');
+
+      if (!storedConsent) {
+        console.log('No stored consent found, showing banner in 1 second...');
+        setTimeout(() => {
+          console.log('Showing banner now');
+          sdk.showBanner();
+        }, 1000);
+      } else {
+        console.log('Consent already stored, banner will not auto-show');
+      }
+
+    } catch (error) {
+      console.error('Failed to initialize SDK:', error);
+      const initStatus = document.getElementById('init-status');
+      initStatus.className = 'alert error';
+      initStatus.textContent = '❌ Failed to initialize SDK: ' + error.message;
+    }
+  </script>
+</body>
+</html>

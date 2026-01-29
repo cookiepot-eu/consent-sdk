@@ -1,0 +1,36 @@
+# Development files
+src/
+tests/
+.github/
+*.config.ts
+*.config.js
+tsconfig.json
+vitest.config.ts
+tsup.config.ts
+.eslintrc.js
+
+# Documentation (keep README, LICENSE, CHANGELOG)
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+SETUP.md
+
+# Testing
+coverage/
+*.test.ts
+*.spec.ts
+test.html
+
+# Development
+serve.js
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Misc
+node_modules/
+*.log
+.DS_Store

@@ -1,0 +1,82 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  size-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for comparison
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build PR branch
+        run: npm run build
+
+      - name: Get PR branch sizes
+        id: pr-size
+        run: |
+          CORE_SIZE=$(gzip -c dist/index.js | wc -c)
+          REACT_SIZE=$(gzip -c dist/react.js | wc -c)
+          echo "core=$CORE_SIZE" >> $GITHUB_OUTPUT
+          echo "react=$REACT_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Checkout main branch
+        run: |
+          git checkout main
+          npm ci
+          npm run build
+
+      - name: Get main branch sizes
+        id: main-size
+        run: |
+          CORE_SIZE=$(gzip -c dist/index.js | wc -c)
+          REACT_SIZE=$(gzip -c dist/react.js | wc -c)
+          echo "core=$CORE_SIZE" >> $GITHUB_OUTPUT
+          echo "react=$REACT_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Compare sizes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prCore = ${{ steps.pr-size.outputs.core }};
+            const prReact = ${{ steps.pr-size.outputs.react }};
+            const mainCore = ${{ steps.main-size.outputs.core }};
+            const mainReact = ${{ steps.main-size.outputs.react }};
+
+            const coreDiff = prCore - mainCore;
+            const reactDiff = prReact - mainReact;
+
+            const formatSize = (bytes) => `${(bytes / 1024).toFixed(2)} KB`;
+            const formatDiff = (diff) => {
+              const sign = diff > 0 ? '+' : '';
+              return `${sign}${formatSize(diff)}`;
+            };
+
+            const comment = `## 📦 Bundle Size Report
+
+            | Bundle | Main | PR | Diff |
+            |--------|------|-----|------|
+            | Core | ${formatSize(mainCore)} | ${formatSize(prCore)} | ${formatDiff(coreDiff)} |
+            | React | ${formatSize(mainReact)} | ${formatSize(prReact)} | ${formatDiff(reactDiff)} |
+
+            ${coreDiff > 1024 ? '⚠️ Core bundle increased by more than 1KB' : '✅ Bundle size looks good'}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

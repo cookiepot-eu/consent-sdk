@@ -1,0 +1,79 @@
+{
+  "name": "@cookiepot-eu/consent",
+  "version": "0.2.0",
+  "description": "CookiePot consent SDK for modern web frameworks",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "serve": "node serve.js",
+    "prepublishOnly": "npm run build"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.18",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "@vitest/coverage-v8": "^3.0.5",
+    "@vitest/ui": "^3.0.5",
+    "eslint": "^9.18.0",
+    "happy-dom": "^20.3.9",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "cookie",
+    "consent",
+    "privacy",
+    "cookiepot",
+    "gdpr",
+    "cookie-banner",
+    "consent-management"
+  ],
+  "author": "BrightClouds <info@brightclouds.be>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cookiepot-eu/consent-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/cookiepot-eu/consent-sdk/issues"
+  },
+  "homepage": "https://cookiepot.eu"
+}
