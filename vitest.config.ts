@@ -21,10 +21,10 @@ export default defineConfig({
         '**/index.tsx', // Export-only files
       ],
       thresholds: {
-        lines: 69,
-        functions: 66,
-        branches: 70,
-        statements: 69,
+        lines: 90,
+        functions: 90,
+        branches: 85,
+        statements: 90,
       },
     },
   },

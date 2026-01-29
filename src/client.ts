@@ -149,6 +149,17 @@ export class CookiePot {
   }
 
   /**
+   * Get the existing SDK instance
+   * @throws Error if SDK is not initialized
+   */
+  static getInstance(): CookiePot {
+    if (!CookiePot.instance) {
+      throw new Error('[CookiePot] SDK not initialized. Call CookiePot.init() first.');
+    }
+    return CookiePot.instance;
+  }
+
+  /**
    * Get the current consent state
    */
   getConsent(): ConsentCategories {
@@ -369,5 +380,36 @@ export class CookiePot {
    */
   isInitialized(): boolean {
     return this.initialized;
+  }
+
+  /**
+   * Destroy the SDK instance and clean up resources
+   * Call this when unmounting your application or before re-initializing
+   */
+  destroy(): void {
+    // Stop script auto-blocker
+    if (this.scriptAutoBlocker) {
+      this.scriptAutoBlocker.stop();
+      this.scriptAutoBlocker = null;
+    }
+
+    // Destroy banner
+    if (this.banner) {
+      this.banner.destroy();
+      this.banner = null;
+    }
+
+    // Destroy preferences modal
+    if (this.preferencesModal) {
+      this.preferencesModal.destroy();
+      this.preferencesModal = null;
+    }
+
+    // Clear event listeners
+    this.eventEmitter.clear();
+
+    // Reset instance
+    this.initialized = false;
+    CookiePot.instance = null;
   }
 }

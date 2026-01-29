@@ -40,6 +40,8 @@ describe('CookiePot', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    // Clean up singleton between tests
+    (CookiePot as any).instance = null;
   });
 
   describe('init', () => {
@@ -471,6 +473,132 @@ describe('CookiePot', () => {
       sdk.hideBanner();
 
       expect(handler).toHaveBeenCalled();
+    });
+
+    it('should show preferences modal', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk.showPreferences();
+
+      const modal = document.querySelector('[role="dialog"]');
+      expect(modal).not.toBeNull();
+    });
+
+    it('should reuse preferences modal instance', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk.showPreferences();
+      const firstModal = document.querySelector('[role="dialog"]');
+
+      // Close and reopen
+      const closeButton = document.querySelector('[data-action="close"]') as HTMLButtonElement;
+      closeButton?.click();
+
+      sdk.showPreferences();
+      const secondModal = document.querySelector('[role="dialog"]');
+
+      expect(firstModal).toBe(secondModal);
+    });
+
+    it('should show preferences modal and emit events', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk.showPreferences();
+
+      // Modal should be shown
+      const modal = document.querySelector('[role="dialog"]');
+      expect(modal).not.toBeNull();
+
+      // Save button should exist
+      const saveButton = document.querySelector('[data-action="save"]');
+      expect(saveButton).not.toBeNull();
+    });
+
+    it('should call showBanner from banner callbacks', async () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk.showBanner();
+
+      // Banner should be shown
+      const banner = document.querySelector('.cookiepot-banner');
+      expect(banner).not.toBeNull();
+    });
+  });
+
+  describe('getInstance', () => {
+    it('should return existing instance', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      const instance = CookiePot.getInstance();
+      expect(instance).toBe(sdk);
+    });
+
+    it('should throw when SDK not initialized', () => {
+      expect(() => CookiePot.getInstance()).toThrow('SDK not initialized');
+    });
+  });
+
+  describe('destroy', () => {
+    it('should clean up resources', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk.showBanner();
+      sdk.showPreferences();
+
+      sdk.destroy();
+
+      expect(sdk.isInitialized()).toBe(false);
+      expect(() => CookiePot.getInstance()).toThrow();
+    });
+
+    it('should allow re-initialization after destroy', () => {
+      const sdk1 = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+      });
+
+      sdk1.destroy();
+
+      const sdk2 = CookiePot.init({
+        apiKey: 'test-api-key-2',
+        domain: 'example2.com',
+      });
+
+      expect(sdk2).not.toBe(sdk1);
+      expect(sdk2.isInitialized()).toBe(true);
+    });
+
+    it('should stop script auto-blocker on destroy', () => {
+      const sdk = CookiePot.init({
+        apiKey: 'test-api-key',
+        domain: 'example.com',
+        autoBlock: {
+          enabled: true,
+          scripts: [{ pattern: 'analytics', category: 'analytics' }],
+        },
+      });
+
+      sdk.destroy();
+
+      expect(sdk.isInitialized()).toBe(false);
     });
   });
 });

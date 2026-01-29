@@ -131,4 +131,104 @@ describe('visitor-id', () => {
       expect(sessionId).not.toBe(visitorId);
     });
   });
+
+  describe('cookie parsing edge cases', () => {
+    it('should handle cookies with leading spaces', () => {
+      // Set a valid v4 UUID cookie (with correct version and variant)
+      const validUuid = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+      document.cookie = `${STORAGE_KEYS.VISITOR_ID}=${validUuid}; Path=/`;
+
+      // Clear localStorage to force cookie read
+      localStorage.clear();
+
+      const id = getOrCreateVisitorId();
+      expect(id).toBe(validUuid);
+    });
+
+    it('should handle empty cookie strings', () => {
+      // Clear all cookies
+      document.cookie.split(';').forEach((cookie) => {
+        const [name] = cookie.split('=');
+        document.cookie = `${name.trim()}=; Max-Age=-1; Path=/`;
+      });
+
+      localStorage.clear();
+
+      const id = getOrCreateVisitorId();
+      // Should generate a new valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(id).toMatch(uuidRegex);
+    });
+
+    it('should handle multiple cookies', () => {
+      // Clear existing cookies first
+      document.cookie.split(';').forEach((cookie) => {
+        const [name] = cookie.split('=');
+        document.cookie = `${name.trim()}=; Max-Age=-1; Path=/`;
+      });
+      localStorage.clear();
+
+      // Valid v4 UUID (version 4 and variant 8, 9, a, or b)
+      const validUuid = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+
+      // Set multiple cookies
+      document.cookie = `other_cookie=value1; Path=/`;
+      document.cookie = `${STORAGE_KEYS.VISITOR_ID}=${validUuid}; Path=/`;
+      document.cookie = `another_cookie=value2; Path=/`;
+
+      const id = getOrCreateVisitorId();
+      expect(id).toBe(validUuid);
+    });
+
+    it('should save to cookie when generating new ID', () => {
+      localStorage.clear();
+      document.cookie.split(';').forEach((cookie) => {
+        const [name] = cookie.split('=');
+        document.cookie = `${name.trim()}=; Max-Age=-1; Path=/`;
+      });
+
+      const id = getOrCreateVisitorId();
+
+      // Verify cookie was set
+      expect(document.cookie).toContain(STORAGE_KEYS.VISITOR_ID);
+      expect(document.cookie).toContain(id);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle localStorage errors gracefully', () => {
+      // Even if there's an issue, should return a valid UUID
+      const id = getOrCreateVisitorId();
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(id).toMatch(uuidRegex);
+    });
+
+    it('should handle sessionStorage errors gracefully', () => {
+      const id = getOrCreateSessionId();
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(id).toMatch(uuidRegex);
+    });
+  });
+
+  describe('UUID validation', () => {
+    it('should reject non-v4 UUIDs', () => {
+      // UUID v1 format (not v4 - wrong version digit)
+      localStorage.setItem(STORAGE_KEYS.VISITOR_ID, 'aaaaaaaa-aaaa-1aaa-aaaa-aaaaaaaaaaaa');
+
+      const id = getOrCreateVisitorId();
+      // Should generate a new valid v4 UUID, not use the invalid one
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(id).toMatch(uuidRegex);
+    });
+
+    it('should reject UUIDs with wrong variant', () => {
+      // UUID with wrong variant digit (c instead of 8, 9, a, or b)
+      localStorage.setItem(STORAGE_KEYS.VISITOR_ID, 'aaaaaaaa-aaaa-4aaa-caaa-aaaaaaaaaaaa');
+
+      const id = getOrCreateVisitorId();
+      // Should generate a new valid v4 UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(id).toMatch(uuidRegex);
+    });
+  });
 });

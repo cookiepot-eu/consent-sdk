@@ -122,4 +122,39 @@ describe('GoogleConsentModeManager', () => {
       expect(() => manager.disable()).not.toThrow();
     });
   });
+
+  describe('isActive', () => {
+    it('should return true when enabled and gtag available', () => {
+      manager = new GoogleConsentModeManager();
+      manager.enable();
+      expect(manager.isActive()).toBe(true);
+    });
+
+    it('should return false when disabled', () => {
+      manager = new GoogleConsentModeManager();
+      manager.disable();
+      expect(manager.isActive()).toBe(false);
+    });
+
+    it('should return false when gtag not available', () => {
+      delete window.gtag;
+      manager = new GoogleConsentModeManager();
+      manager.enable();
+      expect(manager.isActive()).toBe(false);
+    });
+  });
+
+  describe('createGoogleConsentModeManager', () => {
+    it('should create manager with enabled flag true', async () => {
+      const { createGoogleConsentModeManager } = await import('../../src/lib/google-consent-mode');
+      const instance = createGoogleConsentModeManager(true);
+      expect(instance).toBeInstanceOf(GoogleConsentModeManager);
+    });
+
+    it('should create manager with enabled flag false', async () => {
+      const { createGoogleConsentModeManager } = await import('../../src/lib/google-consent-mode');
+      const instance = createGoogleConsentModeManager(false);
+      expect(instance).toBeInstanceOf(GoogleConsentModeManager);
+    });
+  });
 });
