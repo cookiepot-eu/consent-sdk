@@ -14,18 +14,6 @@ declare global {
   }
 }
 
-/**
- * Google consent types
- */
-type GoogleConsentType =
-  | 'ad_storage'
-  | 'ad_user_data'
-  | 'ad_personalization'
-  | 'analytics_storage'
-  | 'functionality_storage'
-  | 'personalization_storage'
-  | 'security_storage';
-
 type ConsentValue = 'granted' | 'denied';
 
 interface GoogleConsentState {
@@ -76,7 +64,7 @@ export class GoogleConsentModeManager {
         wait_for_update: 500, // Wait 500ms for consent before firing tags
       });
 
-      console.log('[CookiePot] Google Consent Mode v2 defaults set');
+      console.warn('[CookiePot] Google Consent Mode v2 defaults set');
     } catch (error) {
       console.error('[CookiePot] Error initializing Google Consent Mode:', error);
     }
@@ -117,7 +105,7 @@ export class GoogleConsentModeManager {
 
       window.gtag!('consent', 'update', googleConsent);
 
-      console.log('[CookiePot] Google Consent Mode v2 updated:', googleConsent);
+      console.warn('[CookiePot] Google Consent Mode v2 updated:', googleConsent);
     } catch (error) {
       console.error('[CookiePot] Error updating Google Consent Mode:', error);
     }
@@ -128,7 +116,7 @@ export class GoogleConsentModeManager {
    */
   enable(): void {
     this.enabled = true;
-    console.log('[CookiePot] Google Consent Mode v2 enabled');
+    console.warn('[CookiePot] Google Consent Mode v2 enabled');
   }
 
   /**
@@ -136,7 +124,7 @@ export class GoogleConsentModeManager {
    */
   disable(): void {
     this.enabled = false;
-    console.log('[CookiePot] Google Consent Mode v2 disabled');
+    console.warn('[CookiePot] Google Consent Mode v2 disabled');
   }
 
   /**

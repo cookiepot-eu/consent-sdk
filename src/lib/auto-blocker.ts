@@ -59,7 +59,7 @@ export class ScriptAutoBlocker {
       subtree: true,
     });
 
-    console.log('[CookiePot] Script auto-blocker started');
+    console.warn('[CookiePot] Script auto-blocker started');
   }
 
   /**
@@ -69,7 +69,7 @@ export class ScriptAutoBlocker {
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
-      console.log('[CookiePot] Script auto-blocker stopped');
+      console.warn('[CookiePot] Script auto-blocker stopped');
     }
   }
 
@@ -162,7 +162,7 @@ export class ScriptAutoBlocker {
       script.removeAttribute('src');
     }
 
-    console.log(`[CookiePot] Blocked ${category} script:`, blockedScript.src || 'inline');
+    console.warn(`[CookiePot] Blocked ${category} script:`, blockedScript.src || 'inline');
   }
 
   /**
@@ -204,7 +204,7 @@ export class ScriptAutoBlocker {
       (script) => !categories.includes(script.category)
     );
 
-    console.log(`[CookiePot] Unblocked ${scriptsToUnblock.length} scripts for:`, categories);
+    console.warn(`[CookiePot] Unblocked ${scriptsToUnblock.length} scripts for:`, categories);
   }
 
   /**
