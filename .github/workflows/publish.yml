@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
-      id-token: write # Required for npm provenance
+      contents: write  # Required to update release notes
+      id-token: write  # Required for npm provenance
 
     steps:
       - uses: actions/checkout@v6
