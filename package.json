@@ -1,6 +1,6 @@
 {
   "name": "@cookiepot-eu/consent",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CookiePot consent SDK for modern web frameworks",
   "license": "MIT",
   "type": "module",
