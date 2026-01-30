@@ -3,7 +3,7 @@ import type { BannerPosition } from '../types';
 /**
  * Default API Configuration
  */
-export const DEFAULT_API_BASE_URL = 'https://api.cookiepot.eu';
+export const DEFAULT_API_BASE_URL = 'https://api.cookiepot.eu/v1';
 export const DEFAULT_API_TIMEOUT = 5000;
 
 /**

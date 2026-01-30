@@ -59,7 +59,7 @@ describe('APIClient', () => {
 
       expect(result).toEqual(mockResponse);
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.test.com/v2/consent',
+        'https://api.test.com/v1/consent',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(mockRequest),
@@ -265,7 +265,7 @@ describe('APIClient', () => {
 
       expect(result).toEqual(mockResponse);
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.test.com/v2/consent/test-visitor-id',
+        'https://api.test.com/v1/consent/test-visitor-id',
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({

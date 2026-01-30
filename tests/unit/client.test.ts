@@ -216,7 +216,7 @@ describe('CookiePot', () => {
 
       expect(fetchMock).toHaveBeenCalled();
       const callArgs = fetchMock.mock.calls[0];
-      expect(callArgs[0]).toContain('/v2/consent');
+      expect(callArgs[0]).toContain('/v1/consent');
     });
 
     it('should not throw if API call fails', async () => {
