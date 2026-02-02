@@ -7,8 +7,8 @@
  * @example
  * ```html
  * <script
- *   src="https://admin.cookiepot.eu/sdk/consent.min.js"
- *   data-domain-id="your-domain-id"
+ *   src="https://unpkg.com/@cookiepot-eu/consent/dist/consent.min.global.js"
+ *   data-domain="example.com"
  *   data-api-key="your-api-key"
  *   data-position="bottom-right"
  *   data-theme="auto"
@@ -53,7 +53,7 @@ function getCurrentScript(): HTMLScriptElement | null {
   const scripts = document.getElementsByTagName('script');
   for (let i = scripts.length - 1; i >= 0; i--) {
     const script = scripts[i];
-    if (script.src && script.src.includes('cookiepot')) {
+    if (script && script.src && script.src.includes('cookiepot')) {
       return script;
     }
   }
@@ -94,8 +94,8 @@ function autoInit(): void {
   const attrs = parseDataAttributes(script);
 
   // Check required attributes
-  if (!attrs.domainId) {
-    console.warn('[CookiePot] Missing required data-domain-id attribute');
+  if (!attrs.domain) {
+    console.warn('[CookiePot] Missing required data-domain attribute');
     return;
   }
 
@@ -106,14 +106,13 @@ function autoInit(): void {
 
   // Initialize CookiePot
   const instance = CookiePot.init({
-    domainId: attrs.domainId,
+    domain: attrs.domain,
     apiKey: attrs.apiKey,
     apiBaseUrl: attrs.apiBaseUrl,
+    language: attrs.language || 'en',
     banner: {
-      enabled: attrs.banner !== 'false',
       position: (attrs.position as BannerPosition) || 'bottom-right',
       theme: (attrs.theme as BannerTheme) || 'auto',
-      language: attrs.language || 'en',
     },
   });
 
