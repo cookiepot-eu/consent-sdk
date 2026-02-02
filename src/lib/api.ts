@@ -47,7 +47,7 @@ export class APIClient {
   async submitConsent(
     request: SubmitConsentRequest
   ): Promise<SubmitConsentResponse> {
-    return this.request<SubmitConsentResponse>('/v1/consent', {
+    return this.request<SubmitConsentResponse>('/v2/consent', {
       method: 'POST',
       body: JSON.stringify(request),
     });
@@ -57,7 +57,7 @@ export class APIClient {
    * Get consent history for a visitor
    */
   async getConsentHistory(visitorId: string): Promise<GetConsentResponse> {
-    return this.request<GetConsentResponse>(`/v1/consent/${visitorId}`, {
+    return this.request<GetConsentResponse>(`/v2/consent/${visitorId}`, {
       method: 'GET',
     });
   }

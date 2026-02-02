@@ -66,7 +66,7 @@ export class CookiePot {
     // Set defaults
     this.config = {
       ...validated,
-      apiBaseUrl: validated.apiBaseUrl ?? 'https://api.cookiepot.eu',
+      apiBaseUrl: validated.apiBaseUrl ?? 'https://admin.cookiepot.eu',
       banner: {
         position: validated.banner?.position ?? 'bottom-center',
         theme: validated.banner?.theme ?? 'light',
