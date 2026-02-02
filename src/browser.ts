@@ -119,6 +119,14 @@ function autoInit(): void {
   // Expose instance globally
   (window as any).CookiePotInstance = instance;
 
+  // Auto-show banner if no consent is stored
+  const consent = instance.getConsent();
+  const hasStoredConsent = consent.analytics || consent.marketing || consent.preferences;
+
+  if (!hasStoredConsent) {
+    instance.showBanner();
+  }
+
   console.log('[CookiePot] Initialized successfully');
 }
 
