@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { StorageBlocker, defaultStoragePatterns } from '../../src/lib/storage-blocker';
 import type { StorageBlockingConfig } from '../../src/lib/storage-blocker';
 import type { ConsentCategories } from '../../src/types';
@@ -347,6 +347,158 @@ describe('StorageBlocker', () => {
       // Restored - should work now
       localStorage.setItem('_ga_restored', 'val');
       expect(localStorage.getItem('_ga_restored')).toBe('val');
+    });
+  });
+
+  describe('debug mode', () => {
+    it('should log blocked operations when debug is enabled', () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const config: StorageBlockingConfig = {
+        enabled: true,
+        debug: true,
+      };
+
+      blocker = new StorageBlocker(config, defaultConsent);
+      blocker.start();
+
+      expect(consoleSpy).toHaveBeenCalledWith('[CookiePot] Storage blocker started');
+
+      localStorage.setItem('_ga_debug', 'value');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Blocked localStorage.setItem("_ga_debug")')
+      );
+
+      localStorage.removeItem('_ga_debug');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Blocked localStorage.removeItem("_ga_debug")')
+      );
+
+      localStorage.clear();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Blocked localStorage.clear()')
+      );
+
+      blocker.stop();
+      expect(consoleSpy).toHaveBeenCalledWith('[CookiePot] Storage blocker stopped');
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('removeItem with consent', () => {
+    it('should allow removeItem for allowed keys', () => {
+      localStorage.setItem('cookiepot_temp', 'value');
+
+      blocker = new StorageBlocker(defaultConfig, defaultConsent);
+      blocker.start();
+
+      localStorage.removeItem('cookiepot_temp');
+      expect(localStorage.getItem('cookiepot_temp')).toBeNull();
+    });
+
+    it('should allow removeItem when consent is granted', () => {
+      localStorage.setItem('_ga_remove_ok', 'value');
+
+      blocker = new StorageBlocker(defaultConfig, allGranted);
+      blocker.start();
+
+      localStorage.removeItem('_ga_remove_ok');
+      expect(localStorage.getItem('_ga_remove_ok')).toBeNull();
+    });
+  });
+
+  describe('clear with consent', () => {
+    it('should allow clear when marketing consent is granted', () => {
+      localStorage.setItem('some_key', 'value');
+
+      blocker = new StorageBlocker(defaultConfig, allGranted);
+      blocker.start();
+
+      localStorage.clear();
+      expect(localStorage.length).toBe(0);
+    });
+  });
+
+  describe('queue processing for removeItem and clear', () => {
+    it('should process queued removeItem when consent is granted', () => {
+      localStorage.setItem('_ga_queued_rm', 'to_remove');
+
+      blocker = new StorageBlocker(defaultConfig, defaultConsent);
+      blocker.start();
+
+      localStorage.removeItem('_ga_queued_rm');
+
+      // Should still be there
+      expect(localStorage.getItem('_ga_queued_rm')).toBe('to_remove');
+      expect(blocker.getQueue().length).toBe(1);
+      expect(blocker.getQueue()[0].type).toBe('removeItem');
+
+      // Grant consent
+      blocker.updateConsent({
+        necessary: true,
+        analytics: true,
+        marketing: false,
+        preferences: false,
+      });
+
+      expect(blocker.getQueue().length).toBe(0);
+      expect(localStorage.getItem('_ga_queued_rm')).toBeNull();
+    });
+
+    it('should process queued clear when consent is granted', () => {
+      localStorage.setItem('test_clear', 'value');
+
+      blocker = new StorageBlocker(defaultConfig, defaultConsent);
+      blocker.start();
+
+      localStorage.clear();
+
+      // Should still be there
+      expect(localStorage.getItem('test_clear')).toBe('value');
+      expect(blocker.getQueue().length).toBe(1);
+      expect(blocker.getQueue()[0].type).toBe('clear');
+
+      // Grant marketing consent (required for clear)
+      blocker.updateConsent({
+        necessary: true,
+        analytics: false,
+        marketing: true,
+        preferences: false,
+      });
+
+      expect(blocker.getQueue().length).toBe(0);
+      expect(localStorage.length).toBe(0);
+    });
+  });
+
+  describe('scan with string patterns', () => {
+    it('should match string patterns in scan results', () => {
+      const config: StorageBlockingConfig = {
+        enabled: true,
+        patterns: [
+          { pattern: 'myapp_track', category: 'analytics', description: 'MyApp Tracker' },
+        ],
+      };
+
+      localStorage.setItem('myapp_track_v1', 'data');
+
+      blocker = new StorageBlocker(config, defaultConsent);
+
+      const result = blocker.scan();
+      const item = result.localStorage.find((i) => i.key === 'myapp_track_v1');
+      expect(item?.category).toBe('analytics');
+      expect(item?.description).toBe('MyApp Tracker');
+    });
+
+    it('should include size in scan results', () => {
+      localStorage.setItem('_ga_sized', 'hello');
+
+      blocker = new StorageBlocker(defaultConfig, defaultConsent);
+
+      const result = blocker.scan();
+      const item = result.localStorage.find((i) => i.key === '_ga_sized');
+      expect(item?.size).toBe(5);
     });
   });
 
