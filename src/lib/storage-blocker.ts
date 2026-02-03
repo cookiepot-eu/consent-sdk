@@ -195,24 +195,22 @@ export class StorageBlocker {
     const origClear = storage.clear.bind(storage);
     const saved: SavedMethods = { setItem: origSetItem, removeItem: origRemoveItem, clear: origClear };
 
-    const self = this;
-
     // Override setItem via defineProperty (works with Proxy-based storage)
     Object.defineProperty(storage, 'setItem', {
-      value: function (key: string, value: string) {
-        if (self.isAllowed(key)) {
+      value: (key: string, value: string) => {
+        if (this.isAllowed(key)) {
           return origSetItem(key, value);
         }
 
-        const category = self.categorizeKey(key);
+        const category = this.categorizeKey(key);
 
-        if (self.hasConsent(category)) {
+        if (this.hasConsent(category)) {
           return origSetItem(key, value);
         }
 
         // Block and optionally queue
-        if (self.config.queueOperations !== false) {
-          self.queueOperation({
+        if (this.config.queueOperations !== false) {
+          this.queueOperation({
             type: 'setItem',
             storageType: type,
             key,
@@ -222,7 +220,7 @@ export class StorageBlocker {
           });
         }
 
-        if (self.config.debug) {
+        if (this.config.debug) {
           console.log(`[CookiePot] Blocked ${type}.setItem("${key}") - requires ${category} consent`);
         }
       },
@@ -232,19 +230,19 @@ export class StorageBlocker {
 
     // Override removeItem
     Object.defineProperty(storage, 'removeItem', {
-      value: function (key: string) {
-        if (self.isAllowed(key)) {
+      value: (key: string) => {
+        if (this.isAllowed(key)) {
           return origRemoveItem(key);
         }
 
-        const category = self.categorizeKey(key);
+        const category = this.categorizeKey(key);
 
-        if (self.hasConsent(category)) {
+        if (this.hasConsent(category)) {
           return origRemoveItem(key);
         }
 
-        if (self.config.queueOperations !== false) {
-          self.queueOperation({
+        if (this.config.queueOperations !== false) {
+          this.queueOperation({
             type: 'removeItem',
             storageType: type,
             key,
@@ -253,7 +251,7 @@ export class StorageBlocker {
           });
         }
 
-        if (self.config.debug) {
+        if (this.config.debug) {
           console.log(`[CookiePot] Blocked ${type}.removeItem("${key}") - requires ${category} consent`);
         }
       },
@@ -263,14 +261,14 @@ export class StorageBlocker {
 
     // Override clear
     Object.defineProperty(storage, 'clear', {
-      value: function () {
+      value: () => {
         // clear() is drastic - default to marketing category (strictest)
-        if (self.hasConsent('marketing')) {
+        if (this.hasConsent('marketing')) {
           return origClear();
         }
 
-        if (self.config.queueOperations !== false) {
-          self.queueOperation({
+        if (this.config.queueOperations !== false) {
+          this.queueOperation({
             type: 'clear',
             storageType: type,
             category: 'marketing',
@@ -278,7 +276,7 @@ export class StorageBlocker {
           });
         }
 
-        if (self.config.debug) {
+        if (this.config.debug) {
           console.log(`[CookiePot] Blocked ${type}.clear() - requires marketing consent`);
         }
       },
