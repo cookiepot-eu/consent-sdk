@@ -23,6 +23,8 @@ import type { APIClient } from './lib/api';
 import { Banner } from './lib/banner';
 import { GoogleConsentModeManager } from './lib/google-consent-mode';
 import { ScriptAutoBlocker } from './lib/auto-blocker';
+import { StorageBlocker } from './lib/storage-blocker';
+import type { StorageScanResult } from './lib/storage-blocker';
 import { PreferencesModal } from './lib/preferences-modal';
 
 /**
@@ -58,6 +60,7 @@ export class CookiePot {
   private preferencesModal: PreferencesModal | null = null;
   private googleConsentMode: GoogleConsentModeManager | null = null;
   private scriptAutoBlocker: ScriptAutoBlocker | null = null;
+  private storageBlocker: StorageBlocker | null = null;
 
   private constructor(config: CookiePotConfig) {
     // Validate config
@@ -125,6 +128,15 @@ export class CookiePot {
         true
       );
       this.scriptAutoBlocker.start();
+    }
+
+    // Initialize Storage Blocker
+    if (validated.storageBlocking?.enabled) {
+      this.storageBlocker = new StorageBlocker(
+        validated.storageBlocking,
+        this.consentState
+      );
+      this.storageBlocker.start();
     }
 
     // Setup event listener for config callback
@@ -209,6 +221,11 @@ export class CookiePot {
     // Update Script Auto-Blocker
     if (this.scriptAutoBlocker) {
       this.scriptAutoBlocker.updateConsent(this.consentState);
+    }
+
+    // Update Storage Blocker
+    if (this.storageBlocker) {
+      this.storageBlocker.updateConsent(this.consentState);
     }
 
     // Emit event
@@ -306,6 +323,10 @@ export class CookiePot {
           this.rejectAll();
           this.hideBanner();
         },
+        onCustomize: () => {
+          this.hideBanner();
+          this.showPreferences();
+        },
       });
     }
 
@@ -342,6 +363,31 @@ export class CookiePot {
     }
 
     this.preferencesModal.show();
+  }
+
+  /**
+   * Scan localStorage and sessionStorage, returning categorized items
+   */
+  scanStorage(): StorageScanResult | null {
+    if (!this.storageBlocker) {
+      return null;
+    }
+    return this.storageBlocker.scan();
+  }
+
+  /**
+   * Get queued storage operations that were blocked pending consent
+   */
+  getBlockedStorage(): { type: string; storageType: string; key?: string; category: string }[] {
+    if (!this.storageBlocker) {
+      return [];
+    }
+    return this.storageBlocker.getQueue().map((op) => ({
+      type: op.type,
+      storageType: op.storageType,
+      key: op.key,
+      category: op.category,
+    }));
   }
 
   /**
@@ -391,6 +437,12 @@ export class CookiePot {
     if (this.scriptAutoBlocker) {
       this.scriptAutoBlocker.stop();
       this.scriptAutoBlocker = null;
+    }
+
+    // Stop storage blocker
+    if (this.storageBlocker) {
+      this.storageBlocker.stop();
+      this.storageBlocker = null;
     }
 
     // Destroy banner

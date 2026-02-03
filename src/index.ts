@@ -38,6 +38,7 @@ export type {
   BannerStyling,
   AutoBlockConfig,
   ScriptPattern,
+  StorageBlockingConfig,
   CookiePotEvent,
   SubmitConsentRequest,
   SubmitConsentResponse,
@@ -45,6 +46,14 @@ export type {
   GetConsentResponse,
   APIError,
 } from './types';
+
+// Export storage blocker types
+export type {
+  StoragePattern,
+  QueuedStorageOperation,
+  StorageScanResult,
+  StorageItem,
+} from './lib/storage-blocker';
 
 // Export API client for advanced usage
 export { CookiePotAPIError } from './lib/api';

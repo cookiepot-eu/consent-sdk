@@ -19,6 +19,7 @@ export class Banner {
   private element: HTMLElement | null = null;
   private onAcceptAll?: () => void;
   private onRejectAll?: () => void;
+  private onCustomize?: () => void;
 
   constructor(
     config: BannerConfig,
@@ -26,6 +27,7 @@ export class Banner {
     callbacks: {
       onAcceptAll?: () => void;
       onRejectAll?: () => void;
+      onCustomize?: () => void;
     } = {}
   ) {
     this.config = {
@@ -38,6 +40,7 @@ export class Banner {
     this.language = language;
     this.onAcceptAll = callbacks.onAcceptAll;
     this.onRejectAll = callbacks.onRejectAll;
+    this.onCustomize = callbacks.onCustomize;
   }
 
   /**
@@ -242,6 +245,28 @@ export class Banner {
     `
       : '';
 
+    const customizeButton = `
+      <button
+        class="${CSS_CLASSES.button}"
+        data-action="customize"
+        aria-label="Manage cookie preferences"
+        style="
+          background-color: transparent;
+          color: var(--cp-text-color);
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: underline;
+        "
+      >
+        ${this.escapeHTML(text.managePreferences)}
+      </button>
+    `;
+
     return `
       <div style="margin-bottom: ${BANNER_DIMENSIONS.gap};">
         <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">
@@ -255,9 +280,11 @@ export class Banner {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
+        align-items: center;
       ">
         ${acceptButton}
         ${rejectButton}
+        ${customizeButton}
       </div>
     `;
   }
@@ -268,6 +295,7 @@ export class Banner {
   private attachEventListeners(banner: HTMLElement): void {
     const acceptButton = banner.querySelector('[data-action="accept-all"]');
     const rejectButton = banner.querySelector('[data-action="reject-all"]');
+    const customizeButton = banner.querySelector('[data-action="customize"]');
 
     if (acceptButton) {
       acceptButton.addEventListener('click', () => {
@@ -296,6 +324,22 @@ export class Banner {
       rejectButton.addEventListener('mouseleave', (e) => {
         const target = e.target as HTMLElement;
         target.style.backgroundColor = 'transparent';
+      });
+    }
+
+    if (customizeButton) {
+      customizeButton.addEventListener('click', () => {
+        this.onCustomize?.();
+      });
+
+      // Hover effect
+      customizeButton.addEventListener('mouseenter', (e) => {
+        const target = e.target as HTMLElement;
+        target.style.opacity = '0.7';
+      });
+      customizeButton.addEventListener('mouseleave', (e) => {
+        const target = e.target as HTMLElement;
+        target.style.opacity = '1';
       });
     }
 

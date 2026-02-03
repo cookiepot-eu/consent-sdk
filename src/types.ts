@@ -109,12 +109,29 @@ export interface AutoBlockConfig {
 /**
  * SDK Configuration
  */
+/**
+ * Storage Blocking Configuration
+ */
+export interface StorageBlockingConfig {
+  enabled: boolean;
+  patterns?: Array<{
+    pattern: string | RegExp;
+    category: ConsentCategory;
+    description?: string;
+  }>;
+  allowedKeys?: (string | RegExp)[];
+  queueOperations?: boolean;
+  maxQueueSize?: number;
+  debug?: boolean;
+}
+
 export interface CookiePotConfig {
   apiKey: string;
   domain: string;
   apiBaseUrl?: string;
   banner?: BannerConfig;
   autoBlock?: AutoBlockConfig;
+  storageBlocking?: StorageBlockingConfig;
   language?: string;
   enableGoogleConsentMode?: boolean;
   cookieDomain?: string;
@@ -152,6 +169,18 @@ export const CookiePotConfigSchema = z.object({
       pattern: z.union([z.string(), z.instanceof(RegExp)]),
       category: z.enum(['necessary', 'analytics', 'marketing', 'preferences']),
     })),
+  }).optional(),
+  storageBlocking: z.object({
+    enabled: z.boolean(),
+    patterns: z.array(z.object({
+      pattern: z.union([z.string(), z.instanceof(RegExp)]),
+      category: z.enum(['necessary', 'analytics', 'marketing', 'preferences']),
+      description: z.string().optional(),
+    })).optional(),
+    allowedKeys: z.array(z.union([z.string(), z.instanceof(RegExp)])).optional(),
+    queueOperations: z.boolean().optional(),
+    maxQueueSize: z.number().positive().optional(),
+    debug: z.boolean().optional(),
   }).optional(),
   language: z.string().length(2).optional(),
   enableGoogleConsentMode: z.boolean().optional(),

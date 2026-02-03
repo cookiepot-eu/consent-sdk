@@ -37,6 +37,7 @@ export type {
   BannerStyling,
   AutoBlockConfig,
   ScriptPattern,
+  StorageBlockingConfig,
   CookiePotEvent,
 } from './types';
 
@@ -114,6 +115,7 @@ function autoInit(): void {
       position: (attrs.position as BannerPosition) || 'bottom-right',
       theme: (attrs.theme as BannerTheme) || 'auto',
     },
+    storageBlocking: attrs.storageBlocking === 'true' ? { enabled: true } : undefined,
   });
 
   // Expose instance globally
